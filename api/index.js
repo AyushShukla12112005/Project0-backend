@@ -9,6 +9,7 @@ import issueRoutes from '../routes/issues.js';
 import commentRoutes from '../routes/comments.js';
 import userRoutes from '../routes/users.js';
 import adminRoutes from '../routes/admin.js';
+import { MongoClient, ServerApiVersion } from "mongodb";
 
 const app = express();
 
@@ -17,34 +18,34 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 // Database connection state
-let isConnected = false;
+let isConnected = true;
 
 // Connect to MongoDB
-async function connectDB() {
-  if (isConnected) {
-    console.log('Using existing database connection');
-    return;
+async function connectDB()
+ {
+const uri = process.env.MONGODB_URI 
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
   }
+});
 
+async function run() {
   try {
-    const MONGODB_URI = process.env.MONGODB_URI;
-    
-    if (!MONGODB_URI) {
-      throw new Error('MONGODB_URI environment variable is not set');
-    }
-
-    const opts = {
-      bufferCommands: false,
-      serverSelectionTimeoutMS: 5000,
-    };
-
-    await mongoose.connect(MONGODB_URI, opts);
-    isConnected = true;
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
+    // Connect the client to the server	(optional starting in v4.7)
+    await client.connect();
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
   }
+}
+run().catch(console.dir);
 }
 
 // Routes
@@ -57,13 +58,22 @@ app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    ok: true, 
-    mongodb: mongoose.connection.readyState === 1,
+  const mongoState = mongoose.connection.readyState;
+
+  const states = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+
+  res.json({
+    ok: mongoState === 1,
+    mongodb: states[mongoState],
+    host: mongoose.connection.host,
     timestamp: new Date().toISOString()
   });
 });
-
 // Root route
 app.get('/', (req, res) => {
   res.json({ 
