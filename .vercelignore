@@ -12,3 +12,9 @@ test-*.js
 server.log
 uploads/*
 !uploads/.gitkeep
+.git
+.gitignore
+README.md
+*.md
+!package.json
+!package-lock.json
