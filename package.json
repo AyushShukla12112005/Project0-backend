@@ -2,7 +2,7 @@
   "name": "bug-tracker-backend",
   "version": "1.0.0",
   "description": "Bug Tracker REST API",
-  "main": "api/index.js",
+  "main": "server.js",
   "type": "module",
   "engines": {
     "node": "24.x"
